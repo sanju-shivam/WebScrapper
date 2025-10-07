@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Scraper</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      color: white;
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    .search-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+    
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    label {
+      font-weight: 600;
+      color: #374151;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    select, input {
+      padding: 0.75rem;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: white;
+      color: #1f2937;
+    }
+    
+    input::placeholder {
+      color: #9ca3af;
+      opacity: 1;
+    }
+    
+    select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2.5rem;
+    }
+    
+    select:focus, input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    button {
+      grid-column: 1 / -1;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      margin-top: 0.5rem;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: white;
+      font-size: 1.2rem;
+    }
+    
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top: 4px solid white;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .results-header {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .results-header h2 {
+      color: #1f2937;
+      font-size: 1.5rem;
+    }
+    
+    .results-count {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    
+    .job-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      border-left: 4px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+    
+    .job-card:hover {
+      transform: translateX(4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      border-left-color: #667eea;
+    }
+    
+    .job-card h3 {
+      margin-bottom: 0.75rem;
+      font-size: 1.25rem;
+      color: #667eea;
+      transition: color 0.2s ease;
+    }
+    
+    .job-card:hover h3 {
+      color: #764ba2;
+    }
+    
+    .job-info {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+      color: #4b5563;
+    }
+    
+    .job-info strong {
+      color: #1f2937;
+    }
+    
+    .job-posted {
+      color: #9ca3af;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .no-results {
+      background: white;
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      color: #6b7280;
+    }
+    
+    .no-results p {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+    
+    .pagination button {
+      padding: 0.5rem 1rem;
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin: 0;
+      grid-column: auto;
+    }
+    
+    .pagination button:hover:not(:disabled) {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+    }
+    
+    .pagination button:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .pagination .page-info {
+      color: white;
+      font-weight: 600;
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+    }
+    
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      form {
+        grid-template-columns: 1fr;
+      }
+      
+      .results-header {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .job-info {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍Job Scraper</h1>
+    
+    <div class="search-card">
+      <form method="POST" action="/search" id="searchForm">
+        <div class="form-group">
+          <label for="role">Job Role</label>
+          <select name="role" id="role" required>
+            <% roles.forEach(r => { %>
+              <option value="<%= r %>" <%= query?.role === r ? 'selected' : '' %>><%= r %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input 
+            type="text" 
+            name="location" 
+            id="location"
+            placeholder="e.g., India, Remote, USA" 
+            value="<%= query?.location || 'India' %>" 
+            required 
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="timeRange">Posted Within</label>
+          <select name="hoursOrDays" id="timeRange" required>
+            <% timeOptions.forEach(t => { %>
+              <option value="<%= t.value %>" <%= query?.hoursOrDays == t.value ? 'selected' : '' %>><%= t.label %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <button type="submit" id="submitBtn">
+          <span id="btnText">🚀 Search Jobs</span>
+        </button>
+      </form>
+    </div>
+
+    <div id="loadingState" style="display: none;">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Scraping LinkedIn jobs... This may take a moment.</p>
+      </div>
+    </div>
+
+    <% if (typeof result !== 'undefined' && result) { %>
+      <div class="results-header">
+        <h2>Search Results</h2>
+        <span class="results-count"><%= result.count %> Jobs Found</span>
+      </div>
+      
+      <% if (result.count === 0) { %>
+        <div class="no-results">
+          <p>😔 No jobs found matching your criteria.</p>
+          <p>Try adjusting your search parameters.</p>
+        </div>
+      <% } else { %>
+        <div id="jobsContainer">
+          <% result.jobs.forEach(job => { %>
+            <a href="<%= job.link %>" target="_blank" rel="noopener noreferrer" class="job-card">
+              <h3><%= job.title %></h3>
+              <div class="job-info">
+                <span>🏢 <strong><%= job.company %></strong></span>
+                <span>📍 <%= job.location %></span>
+              </div>
+              <div class="job-posted">
+                🕒 Posted <%= job.posted %>
+              </div>
+            </a>
+          <% }) %>
+        </div>
+        
+        <div class="pagination" id="pagination"></div>
+      <% } %>
+    <% } %>
+  </div>
+
+  <script>
+    const form = document.getElementById('searchForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const loadingState = document.getElementById('loadingState');
+
+    form.addEventListener('submit', function() {
+      submitBtn.disabled = true;
+      btnText.textContent = '⏳ Searching...';
+      loadingState.style.display = 'block';
+      loadingState.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    // Pagination logic
+    <% if (typeof result !== 'undefined' && result && result.count > 0) { %>
+      const jobCards = document.querySelectorAll('.job-card');
+      const itemsPerPage = 5;
+      const totalPages = Math.ceil(jobCards.length / itemsPerPage);
+      let currentPage = 1;
+
+      function showPage(page) {
+        jobCards.forEach((card, index) => {
+          const startIndex = (page - 1) * itemsPerPage;
+          const endIndex = startIndex + itemsPerPage;
+          
+          if (index >= startIndex && index < endIndex) {
+            card.style.display = 'block';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        updatePagination();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function updatePagination() {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        // Previous button
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '← Previous';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+          if (currentPage > 1) {
+            currentPage--;
+            showPage(currentPage);
+          }
+        };
+        pagination.appendChild(prevBtn);
+
+        // Page info
+        const pageInfo = document.createElement('span');
+        pageInfo.className = 'page-info';
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        pagination.appendChild(pageInfo);
+
+        // Next button
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = 'Next →';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            showPage(currentPage);
+          }
+        };
+        pagination.appendChild(nextBtn);
+      }
+
+      // Initialize pagination
+      showPage(1);
+    <% } %>
+  </script>
+</body>
+</html>
